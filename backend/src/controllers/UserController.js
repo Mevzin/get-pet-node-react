@@ -133,9 +133,22 @@ module.exports = class UserController {
 	}
 
 	static async editUser(req, res) {
-		res.status(422).json({
-			message: "Deu certo o update",
-		});
-		return;
+		const id = req.params.id;
+
+		const { name, email, phone, password, confirmpassword } = req.body;
+
+		let image = "";
+
+		const user = await User.findById(id);
+
+		if (!user) {
+			res.status(422).json({
+				message: "Usuário não encontrado!",
+			});
+			return;
+		}
+
+		res.status(200).json({ user });
+		console.log(user);
 	}
 };
