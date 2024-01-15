@@ -1,8 +1,11 @@
-const createUserToken = require("../helpers/create_user_token");
-const User = require("../models/User");
-const bcrypt = require("bcrypt");
-const getToken = require("../helpers/get-token");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
+const User = require("../models/User");
+
+const getToken = require("../helpers/GetToken");
+const createUserToken = require("../helpers/CreateUserToken");
+const getUserByToken = require("../helpers/GetUserByToken");
 
 module.exports = class UserController {
 	static async register(req, res) {
@@ -124,7 +127,7 @@ module.exports = class UserController {
 
 		if (!user) {
 			res.status(422).json({
-				message: "Usuário não encontrado!",
+				message: "User not found",
 			});
 			return;
 		}
@@ -135,16 +138,52 @@ module.exports = class UserController {
 	static async editUser(req, res) {
 		const id = req.params.id;
 
+		const token = getToken(req);
+		const user = await getUserByToken(token);
+
 		const { name, email, phone, password, confirmpassword } = req.body;
 
 		let image = "";
 
-		const user = await User.findById(id);
+		if (!name) {
+			res.status(422).json({ message: "O nome é obrigatorio" });
+			return;
+		}
 
-		if (!user) {
+		if (!email) {
+			res.status(422).json({ message: "O email é obrigatorio" });
+			return;
+		}
+
+		const userExists = await User.findOne({ email: email });
+
+		if (user.email !== email && userExists) {
 			res.status(422).json({
-				message: "Usuário não encontrado!",
+				message: "User not found",
 			});
+		}
+
+		user.email = email;
+
+		if (!phone) {
+			res.status(422).json({ message: "O telefone é obrigatorio" });
+			return;
+		}
+
+		if (!password) {
+			res.status(422).json({ message: "O senha é obrigatoria" });
+			return;
+		}
+
+		if (!confirmPassword) {
+			res.status(422).json({ message: "A confirmação de senha é obrigatoria" });
+			return;
+		}
+
+		if (password !== confirmPassword) {
+			res
+				.status(422)
+				.json({ message: "A senha e a confirmação de senha devem ser iguais" });
 			return;
 		}
 
